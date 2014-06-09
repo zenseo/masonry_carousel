@@ -1,14 +1,15 @@
-function MasonryBlocks(options) {
+(function($, document, window){
+		function MasonryBlocks(options) {
 			this.wrapper = options.wrapper;
 			this.stepSize = options.stepSize;
 			this.animType = options.animType;
 			this.visibleBlocks = options.visibleBlocks;
 			this.startIndex = options.startIndex || 0; 
 			this.endIndex = options.endIndex || this.visibleBlocks; 
-			this.blocks = this.wrapper.find('.js-masonry_block');
+			this.blocks = options.blocks || this.wrapper.find('.js-masonry_block');
 			this.nav = {
-				next: this.wrapper.find('.masonry_nav-btn--next'),
-				prev: this.wrapper.find('.masonry_nav-btn--prev')
+				next: (options.nav && options.nav.next) ? options.next : this.wrapper.find('.masonry_nav-btn--next'),
+				prev: (options.nav && options.nav.prev) ? options.prev : this.wrapper.find('.masonry_nav-btn--prev')
 			}
 			this.init();
 		}
@@ -16,24 +17,34 @@ function MasonryBlocks(options) {
 		MasonryBlocks.prototype = {
 			init: function() {
 			// Show blocks
-				this.blocks
-					.not(this.blocks.slice(this.startIndex, this.endIndex))										
+			var self = this,
+				blocks = this.blocks,
+				start = this.startIndex,
+				end = this.endIndex;
+
+				blocks
+					.not(blocks.slice(start, end))										
 					.hide();
 
-				this.addListeners();
+				self.addListeners();
 			},
 			addListeners: function() {
-				this.wrapper.on('click', '.js-nav-btn', { masonryObj: this}, this.onNavClick);
+				var self = this;
+				
+				self.wrapper.on('click', '.js-nav-btn', { masonryObj: self}, self.onNavClick);
 			},
 			onNavClick: function(e) {
-				var	inst = e.data.masonryObj;
-				inst.changeBlocks(this);
-				inst.changeNavVisibility(this);
+				var	self = this,
+					inst = e.data.masonryObj;
+
+				inst.changeBlocks(self);
+				inst.changeNavVisibility(self);
 			},
 			changeBlocks: function(navEl) {
-				var	blocks = this.blocks,
-					end = this.endIndex,
-					step = this.stepSize,
+				var	self = this,
+					blocks = self.blocks,
+					end = self.endIndex,
+					step = self.stepSize,
 					changingBlocks;
 
 				if ($(navEl).data('dir') === 'next') {
@@ -41,28 +52,35 @@ function MasonryBlocks(options) {
 					changingBlocks.each(function(index, el) {
 						$(el).fadeIn(400);
 					});					
-					this.endIndex = end = end + step;									
+					self.endIndex = end = end + step;									
 				}
 				else {
-					changingBlocks = this.blocks.slice(end - step, end);
+					changingBlocks = blocks.slice(end - step, end);
 					changingBlocks.each(function(index, el) {
 						$(el).fadeOut(400);
 					});
-					this.endIndex -= step;
+					self.endIndex -= step;
 				}
 			},
 			changeNavVisibility: function(navEl) {
-				if (!this.blocks.eq(this.endIndex).next().hasClass('js-masonry_block')) {
+				var self = this,
+					blocks = self.blocks,
+					end = self.endIndex,
+					visibleBlocks = self.visibleBlocks,
+					nav = self.nav;
+
+				if (!blocks.eq(end).next().hasClass('js-masonry_block')) {
 					$(navEl).hide().prev().show();
 					return;
 				}	
-				if(this.endIndex == this.visibleBlocks) {
+				if(end == visibleBlocks) {
 					$(navEl).hide().next().show();
 					return;
 				}
-				if (this.endIndex - this.visibleBlocks !== 0) {
-					$(this.nav.next).add(this.nav.prev).show();
+				if (end - visibleBlocks !== 0) {
+					$(nav.next).add(nav.prev).show();
 					return;
 				}
 			}
 		}
+	})(jQuery, document, window);
